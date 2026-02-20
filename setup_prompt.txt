@@ -1,0 +1,26 @@
+Create a Git Flow structured project for a Model Optimizer skill with the following:
+
+1. Directory structure:
+   - src/ with subdirectories: pricing/, discovery/, optimizer/, config/, reporting/
+   - tests/ directory
+   - scripts/ directory with run-weekly.js
+   - data/ directory for cache files
+   - test/fixtures/ with sample SOUL.md
+
+2. Core files:
+   - SKILL.md (skill definition)
+   - README.md (already exists, update it)
+   - package.json with basic dependencies
+   - .gitignore for Node.js projects
+   - .gitflow file or documentation
+
+3. Git Flow branches:
+   - main (production)
+   - develop (integration)
+   - Feature branches will be created as feature/*
+   - Release branches as release/*
+   - Hotfix branches as hotfix/*
+
+4. Initial commit should be on develop branch with this structure.
+
+Important: This is just the skeleton - no implementation yet. Use ES6 modules.
