@@ -1,0 +1,35 @@
+{
+  "name": "model-optimizer",
+  "version": "0.1.0",
+  "description": "Cost-quality optimizer for AI model routing",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node scripts/run-weekly.js",
+    "test": "jest",
+    "lint": "eslint src/ tests/",
+    "dry-run": "node scripts/run-weekly.js --dry-run",
+    "apply": "node scripts/run-weekly.js --apply"
+  },
+  "keywords": [
+    "openclaw",
+    "ai",
+    "optimization",
+    "cost",
+    "routing"
+  ],
+  "author": "Clawrence Crabbot",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "node-fetch": "^3.0.0",
+    "yaml": "^2.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
