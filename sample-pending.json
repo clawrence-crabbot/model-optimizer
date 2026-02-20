@@ -1,0 +1,34 @@
+{
+  "changeSetId": "model-opt-20260219",
+  "storedAt": "2026-02-19T22:15:00.000Z",
+  "changes": {
+    "modifiedLines": [
+      {
+        "lineNumber": 45,
+        "oldText": "- **simple-qa**: claude-haiku-4-5-20251001",
+        "newText": "- **simple-qa**: deepseek/deepseek-reasoner"
+      },
+      {
+        "lineNumber": 46,
+        "oldText": "- **browser-operations**: claude-haiku-4-5-20251001",
+        "newText": "- **browser-operations**: google/gemini-3-flash-preview"
+      },
+      {
+        "lineNumber": 47,
+        "oldText": "- **multi-step-planning**: claude-haiku-4-5-20251001",
+        "newText": "- **multi-step-planning**: moonshot/kimi-k2.5"
+      }
+    ],
+    "metadata": {
+      "monthlySavings": 1295.00,
+      "savingsPercentage": 32.3,
+      "qualityImpact": "19 improved, 0 degraded",
+      "generatedAt": "2026-02-19T22:07:58.000Z"
+    }
+  },
+  "metadata": {
+    "source": "weekly-pipeline",
+    "version": "1.0.0",
+    "requiresApproval": true
+  }
+}

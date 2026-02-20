@@ -1,0 +1,13 @@
+{
+  "batchId": "weekly-2026-02-20T04-54-50-518Z",
+  "soulPath": "/home/clawrence/src/skills/model-optimizer/test/fixtures/SOUL.md",
+  "reportPath": "/home/clawrence/src/skills/model-optimizer/reports/weekly-2026-02-20T04-54-50Z.md",
+  "createdAt": "2026-02-20T04:54:50.518Z",
+  "status": "pending",
+  "finalRequestSent": false,
+  "items": [],
+  "metadata": {
+    "recommendationCount": 10,
+    "modifiedCount": 0
+  }
+}

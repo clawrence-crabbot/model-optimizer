@@ -31,7 +31,7 @@ export async function fetchAnthropicPricing() {
   const cached = readCache('anthropic');
   if (cached) {
     console.log('Using cached Anthropic pricing data');
-    return cached.data;
+    return ensureExtendedAnthropicModels(cached.data);
   }
 
   try {
@@ -49,10 +49,12 @@ export async function fetchAnthropicPricing() {
     const html = await response.text();
     const prices = parseAnthropicHTML(html);
     
+    const extended = ensureExtendedAnthropicModels(prices);
+
     // Cache results
-    writeCache('anthropic', prices);
+    writeCache('anthropic', extended);
     
-    return prices;
+    return extended;
   } catch (error) {
     console.error('Failed to fetch Anthropic pricing:', error.message);
     
@@ -86,7 +88,9 @@ function parseAnthropicHTML(html) {
     model: 'claude-haiku-4-5-20251001',
     inputPerM: 0.80,
     outputPerM: 4.00,
-    contextWindow: 200000
+    contextWindow: 200000,
+    vision: true,
+    cache: false
   });
   
   // Sonnet
@@ -94,7 +98,9 @@ function parseAnthropicHTML(html) {
     model: 'claude-sonnet-4-6',
     inputPerM: 3.00,
     outputPerM: 15.00,
-    contextWindow: 200000
+    contextWindow: 200000,
+    vision: true,
+    cache: false
   });
   
   // Opus
@@ -102,7 +108,29 @@ function parseAnthropicHTML(html) {
     model: 'claude-opus-4-6',
     inputPerM: 15.00,
     outputPerM: 75.00,
-    contextWindow: 200000
+    contextWindow: 200000,
+    vision: true,
+    cache: false
+  });
+
+  // Claude 3.5 Sonnet (requested extension)
+  prices.push({
+    model: 'anthropic/claude-3.5-sonnet',
+    inputPerM: 3.00,
+    outputPerM: 15.00,
+    contextWindow: 200000,
+    vision: true,
+    cache: false
+  });
+
+  // Claude 3.5 Haiku (requested extension)
+  prices.push({
+    model: 'anthropic/claude-3.5-haiku',
+    inputPerM: 0.25,
+    outputPerM: 1.25,
+    contextWindow: 200000,
+    vision: true,
+    cache: false
   });
   
   return prices;
@@ -136,21 +164,54 @@ function getHardcodedPrices() {
       model: 'claude-haiku-4-5-20251001',
       inputPerM: 0.80,
       outputPerM: 4.00,
-      contextWindow: 200000
+      contextWindow: 200000,
+      vision: true,
+      cache: false
     },
     {
       model: 'claude-sonnet-4-6',
       inputPerM: 3.00,
       outputPerM: 15.00,
-      contextWindow: 200000
+      contextWindow: 200000,
+      vision: true,
+      cache: false
     },
     {
       model: 'claude-opus-4-6',
       inputPerM: 15.00,
       outputPerM: 75.00,
-      contextWindow: 200000
+      contextWindow: 200000,
+      vision: true,
+      cache: false
+    },
+    {
+      model: 'anthropic/claude-3.5-sonnet',
+      inputPerM: 3.00,
+      outputPerM: 15.00,
+      contextWindow: 200000,
+      vision: true,
+      cache: false
+    },
+    {
+      model: 'anthropic/claude-3.5-haiku',
+      inputPerM: 0.25,
+      outputPerM: 1.25,
+      contextWindow: 200000,
+      vision: true,
+      cache: false
     }
   ];
+}
+
+function ensureExtendedAnthropicModels(prices) {
+  const required = getHardcodedPrices();
+  const merged = [...prices];
+  for (const model of required) {
+    if (!merged.find(entry => entry.model === model.model)) {
+      merged.push(model);
+    }
+  }
+  return merged;
 }
 
 /**
