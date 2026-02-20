@@ -1,0 +1,15 @@
+{
+  "batchId": "weekly-2026-02-20T04-53-21-607Z",
+  "soulPath": "/home/clawrence/src/skills/model-optimizer/test/fixtures/SOUL.md",
+  "reportPath": "/home/clawrence/src/skills/model-optimizer/reports/weekly-2026-02-20T04-53-21Z.md",
+  "createdAt": "2026-02-20T04:53:21.608Z",
+  "status": "expired",
+  "finalRequestSent": false,
+  "items": [],
+  "metadata": {
+    "recommendationCount": 10,
+    "modifiedCount": 0
+  },
+  "expiredAt": "2026-02-20T04:54:50.518Z",
+  "expireReason": "superseded-by-new-run"
+}
