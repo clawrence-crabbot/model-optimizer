@@ -5,9 +5,9 @@
 
 export { fetchAnthropicPricing } from './anthropic.js';
 export { fetchGooglePricing } from './google.js';
+export { fetchDeepSeekPricing } from './deepseek.js';
 
 // TODO: Add other providers
-// export { fetchDeepSeekPricing } from './deepseek.js';
 // export { fetchOpenAIPricing } from './openai.js';
 
 /**
@@ -34,13 +34,13 @@ export async function fetchAllPricing() {
   }
   
   // Add other providers as implemented
-  // try {
-  //   const { fetchDeepSeekPricing } = await import('./deepseek.js');
-  //   results.deepseek = await fetchDeepSeekPricing();
-  // } catch (error) {
-  //   console.error('Failed to fetch DeepSeek pricing:', error.message);
-  //   results.deepseek = null;
-  // }
+  try {
+    const { fetchDeepSeekPricing } = await import('./deepseek.js');
+    results.deepseek = await fetchDeepSeekPricing();
+  } catch (error) {
+    console.error('Failed to fetch DeepSeek pricing:', error.message);
+    results.deepseek = null;
+  }
   
   return results;
 }
