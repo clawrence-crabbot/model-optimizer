@@ -31,7 +31,7 @@ export async function fetchGooglePricing() {
   const cached = readCache('google');
   if (cached) {
     console.log('Using cached Google pricing data');
-    return cached.data;
+    return ensureExtendedGoogleModels(cached.data);
   }
 
   try {
@@ -49,10 +49,12 @@ export async function fetchGooglePricing() {
     const html = await response.text();
     const prices = parseGoogleHTML(html);
     
+    const extended = ensureExtendedGoogleModels(prices);
+
     // Cache results
-    writeCache('google', prices);
+    writeCache('google', extended);
     
-    return prices;
+    return extended;
   } catch (error) {
     console.error('Failed to fetch Google pricing:', error.message);
     
@@ -82,7 +84,9 @@ function parseGoogleHTML(html) {
     model: 'google/gemini-3-flash-preview',
     inputPerM: 0.50,
     outputPerM: 3.00,
-    contextWindow: 1000000  // 1M context
+    contextWindow: 1000000,  // 1M context
+    vision: true,
+    cache: false
   });
   
   // Gemini 2.5 Flash - cheap file ops
@@ -90,7 +94,9 @@ function parseGoogleHTML(html) {
     model: 'google/gemini-2.5-flash',
     inputPerM: 0.50,
     outputPerM: 3.00,
-    contextWindow: 1000000
+    contextWindow: 1000000,
+    vision: true,
+    cache: false
   });
   
   // Gemini 2.5 Pro - higher quality
@@ -98,7 +104,9 @@ function parseGoogleHTML(html) {
     model: 'google/gemini-2.5-pro',
     inputPerM: 1.25,
     outputPerM: 10.00,
-    contextWindow: 2000000  // 2M context
+    contextWindow: 2000000,  // 2M context
+    vision: true,
+    cache: false
   });
   
   // Gemini 3 Pro (Preview) - premium
@@ -106,7 +114,9 @@ function parseGoogleHTML(html) {
     model: 'google/gemini-3-pro-preview',
     inputPerM: 2.00,
     outputPerM: 12.00,
-    contextWindow: 2000000
+    contextWindow: 2000000,
+    vision: true,
+    cache: false
   });
   
   // Flash-Lite - cheapest for heartbeat
@@ -114,7 +124,29 @@ function parseGoogleHTML(html) {
     model: 'google/gemini-flash-lite',
     inputPerM: 0.10,
     outputPerM: 0.40,
-    contextWindow: 1000000
+    contextWindow: 1000000,
+    vision: false,
+    cache: false
+  });
+
+  // Gemini 1.5 Pro (requested extension)
+  prices.push({
+    model: 'google/gemini-1.5-pro',
+    inputPerM: 3.50,
+    outputPerM: 10.50,
+    contextWindow: 1000000,
+    vision: true,
+    cache: false
+  });
+
+  // Gemini 1.5 Flash (requested extension)
+  prices.push({
+    model: 'google/gemini-1.5-flash',
+    inputPerM: 0.037,
+    outputPerM: 0.15,
+    contextWindow: 1000000,
+    vision: false,
+    cache: false
   });
   
   return prices;
@@ -149,33 +181,70 @@ function getHardcodedPrices() {
       model: 'google/gemini-3-flash-preview',
       inputPerM: 0.50,
       outputPerM: 3.00,
-      contextWindow: 1000000
+      contextWindow: 1000000,
+      vision: true,
+      cache: false
     },
     {
       model: 'google/gemini-2.5-flash',
       inputPerM: 0.50,
       outputPerM: 3.00,
-      contextWindow: 1000000
+      contextWindow: 1000000,
+      vision: true,
+      cache: false
     },
     {
       model: 'google/gemini-2.5-pro',
       inputPerM: 1.25,
       outputPerM: 10.00,
-      contextWindow: 2000000
+      contextWindow: 2000000,
+      vision: true,
+      cache: false
     },
     {
       model: 'google/gemini-3-pro-preview',
       inputPerM: 2.00,
       outputPerM: 12.00,
-      contextWindow: 2000000
+      contextWindow: 2000000,
+      vision: true,
+      cache: false
     },
     {
       model: 'google/gemini-flash-lite',
       inputPerM: 0.10,
       outputPerM: 0.40,
-      contextWindow: 1000000
+      contextWindow: 1000000,
+      vision: false,
+      cache: false
+    },
+    {
+      model: 'google/gemini-1.5-pro',
+      inputPerM: 3.50,
+      outputPerM: 10.50,
+      contextWindow: 1000000,
+      vision: true,
+      cache: false
+    },
+    {
+      model: 'google/gemini-1.5-flash',
+      inputPerM: 0.037,
+      outputPerM: 0.15,
+      contextWindow: 1000000,
+      vision: false,
+      cache: false
     }
   ];
+}
+
+function ensureExtendedGoogleModels(prices) {
+  const required = getHardcodedPrices();
+  const merged = [...prices];
+  for (const model of required) {
+    if (!merged.find(entry => entry.model === model.model)) {
+      merged.push(model);
+    }
+  }
+  return merged;
 }
 
 /**

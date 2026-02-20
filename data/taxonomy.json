@@ -1,0 +1,190 @@
+{
+  "tasks": [
+    {
+      "id": "casual-chat",
+      "name": "Casual Chat",
+      "description": "Casual chat, greetings, jokes, social pleasantries",
+      "category": "Daily Conversation"
+    },
+    {
+      "id": "simple-qa",
+      "name": "Simple Q&A",
+      "description": "Simple Q&A (one-line answers)",
+      "category": "Daily Conversation"
+    },
+    {
+      "id": "browser-operations",
+      "name": "Browser Operations",
+      "description": "Browser operations, web automation, navigation",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "exec-commands",
+      "name": "Exec Commands",
+      "description": "Execute shell commands, terminal interactions",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "file-operations",
+      "name": "File Operations",
+      "description": "Read, write, edit files, file system management",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "web-search-fetch",
+      "name": "Web Search/Fetch",
+      "description": "Searching the web, fetching page content",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "process-management",
+      "name": "Process Management",
+      "description": "Managing background processes, monitoring",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "github-cli",
+      "name": "GitHub CLI",
+      "description": "Interacting with GitHub via CLI",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "multi-step-planning",
+      "name": "Multi-step Planning",
+      "description": "Planning complex tasks with multiple steps",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "requirements-engineering",
+      "name": "Requirements Engineering",
+      "description": "Discovery, scope, acceptance criteria, NFRs, trade-offs",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "calendar-email-checking",
+      "name": "Calendar/Email Checking",
+      "description": "Checking calendar events and unread emails",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "research-synthesis",
+      "name": "Research and Synthesis",
+      "description": "Synthesizing information from multiple sources",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "complex-problem-solving",
+      "name": "Complex Problem-solving",
+      "description": "Solving novel or complex technical problems",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "analysis-breakdowns",
+      "name": "Analysis and Breakdowns",
+      "description": "Breaking down large problems into smaller parts",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "code-changes",
+      "name": "Code Changes",
+      "description": "Implementing code changes, refactoring",
+      "category": "Escalation"
+    },
+    {
+      "id": "debugging",
+      "name": "Debugging",
+      "description": "Identifying and fixing bugs in code",
+      "category": "Escalation"
+    },
+    {
+      "id": "formatting",
+      "name": "Formatting",
+      "description": "Code formatting, linting, data cleanup",
+      "category": "Escalation"
+    },
+    {
+      "id": "summaries",
+      "name": "Summaries",
+      "description": "Summarizing text, logs, or search results",
+      "category": "Escalation"
+    },
+    {
+      "id": "vision-tasks",
+      "name": "Vision Tasks",
+      "description": "Image understanding, visual reasoning, multimodal tasks",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "long-reasoning",
+      "name": "Long Reasoning",
+      "description": "Complex chain-of-thought style reasoning over long contexts",
+      "category": "Action Tasks"
+    },
+    {
+      "id": "file-edits-cheap",
+      "name": "Cheap File Edits",
+      "description": "Simple, low-risk file edits",
+      "category": "Escalation"
+    },
+    {
+      "id": "file-edits-high-risk",
+      "name": "High-risk File Edits",
+      "description": "Complex or high-risk file edits",
+      "category": "Escalation"
+    },
+    {
+      "id": "sub-agent-coordination",
+      "name": "Sub Agent Coordination",
+      "description": "Sub-agent coordination",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T02:29:10.881Z"
+    },
+    {
+      "id": "data-extraction",
+      "name": "Data Extraction",
+      "description": "External data gathering (web scraping, research)",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T02:51:32.325Z"
+    },
+    {
+      "id": "routing-condition",
+      "name": "Routing Condition",
+      "description": ">3 files touched",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T04:05:57.088Z"
+    },
+    {
+      "id": "code-change-alert",
+      "name": "Code Change Alert",
+      "description": ">150 LOC changed",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T04:05:57.088Z"
+    },
+    {
+      "id": "issue-resolution",
+      "name": "Issue Resolution",
+      "description": "first Haiku fix attempt failed",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T04:25:58.376Z"
+    },
+    {
+      "id": "strategic-problem-escalation",
+      "name": "Strategic Problem Escalation",
+      "description": "Strategic/novel problems",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T04:28:49.557Z"
+    },
+    {
+      "id": "conditional-routing",
+      "name": "Conditional Routing",
+      "description": "Escalate to Claude Sonnet only if ANY of",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-20T04:31:17.214Z"
+    }
+  ],
+  "categories": [
+    "Daily Conversation",
+    "Action Tasks",
+    "Escalation"
+  ]
+}

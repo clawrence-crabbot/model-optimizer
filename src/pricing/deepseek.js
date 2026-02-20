@@ -161,6 +161,8 @@ function getFallbackPricing() {
       inputPerM: 0.07,
       outputPerM: 1.10,
       contextWindow: 128000,
+      vision: false,
+      cache: false,
       note: 'Fallback pricing from TOOLS.md'
     },
     {
@@ -168,9 +170,47 @@ function getFallbackPricing() {
       inputPerM: 0.07,
       outputPerM: 1.10,
       contextWindow: 128000,
+      vision: false,
+      cache: false,
       note: 'Fallback pricing (same as Chat)'
+    },
+    {
+      model: 'deepseek/deepseek-v3',
+      inputPerM: 0.80,
+      outputPerM: 1.60,
+      contextWindow: 128000,
+      vision: false,
+      cache: true
+    },
+    {
+      model: 'deepseek/deepseek-r1',
+      inputPerM: 0.80,
+      outputPerM: 1.60,
+      contextWindow: 128000,
+      vision: false,
+      cache: true
+    },
+    {
+      model: 'deepseek/deepseek-r1-distill',
+      inputPerM: 0,
+      outputPerM: 0,
+      contextWindow: 128000,
+      vision: false,
+      cache: false,
+      free: true
     }
   ];
+}
+
+function ensureExtendedDeepSeekModels(prices) {
+  const required = getFallbackPricing();
+  const merged = [...prices];
+  for (const model of required) {
+    if (!merged.find(entry => entry.model === model.model)) {
+      merged.push(model);
+    }
+  }
+  return merged;
 }
 
 /**
@@ -182,7 +222,7 @@ export async function fetchDeepSeekPricing() {
   const cached = readCache('deepseek');
   if (cached) {
     console.log('Using cached DeepSeek pricing data');
-    return cached.data;
+    return ensureExtendedDeepSeekModels(cached.data);
   }
   
   try {
@@ -190,14 +230,15 @@ export async function fetchDeepSeekPricing() {
     const prices = await fetchFromSource();
     
     // Cache the results
-    writeCache('deepseek', prices, 'deepseek.com + fallback');
+    const extended = ensureExtendedDeepSeekModels(prices);
+    writeCache('deepseek', extended, 'deepseek.com + fallback');
     
-    return prices;
+    return extended;
   } catch (error) {
     console.error('Failed to fetch DeepSeek pricing:', error.message);
     
     // Return fallback pricing even if everything fails
-    const fallback = getFallbackPricing();
+    const fallback = ensureExtendedDeepSeekModels(getFallbackPricing());
     writeCache('deepseek', fallback, 'fallback (fetch failed)');
     return fallback;
   }

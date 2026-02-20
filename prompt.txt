@@ -1,0 +1,77 @@
+You are tasked with extending the OpenClaw model-optimizer skill with new AI models from multiple providers. Please examine the existing codebase structure and implement the following updates:
+
+## Current Structure
+- Provider pricing modules in `src/pricing/`: anthropic.js, google.js, deepseek.js
+- Each exports a fetch function returning array of {model, inputPerM, outputPerM, contextWindow}
+- Pricing cache in `data/pricing-cache.json`
+- Optimizer algorithm in `src/optimizer/index.js` with QUALITY_SCORES and TASK_TYPE_MAP
+- Task taxonomy in `data/taxonomy.json`
+
+## New Models to Add (from provided table)
+
+### 🔵 PREMIUM MODELS
+1. **Kimi K2.5** (Moonshot) - Reasoning, coding, agents - Input: $0.60, Output: $3.00, Vision: Yes, Cache: No
+2. **Kimi K2** (Moonshot) - Reasoning, agentic workflows - Input: $0.60 (cache miss), $0.15 (cache hit), Output: $2.50, Vision: Yes, Cache: Yes
+3. **GPT‑4.1** (OpenAI) - Reasoning, coding - Input: ~$7.50 (avg), Output: ~$22.50 (avg), Vision: No, Cache: Yes
+4. **GPT‑4o** (OpenAI) - Multimodal, coding - Input: $5, Output: $15, Vision: Yes, Cache: Yes
+5. **Claude 3.5 Sonnet** (Anthropic) - Reasoning, writing - Input: $3, Output: $15, Vision: Yes, Cache: No
+6. **Gemini 1.5 Pro** (Google) - Multimodal reasoning - Input: $3.50, Output: $10.50, Vision: Yes, Cache: No
+
+### 🟠 MID‑TIER MODELS
+7. **DeepSeek V3** (DeepSeek) - Coding, reasoning - Input: $0.80, Output: $1.60 (estimate), Vision: No, Cache: Yes
+8. **DeepSeek R1** (DeepSeek) - Long reasoning - Input: $0.80, Output: $1.60, Vision: No, Cache: Yes
+9. **Qwen2.5‑Max** (Alibaba) - Reasoning, coding - Input: $0.75, Output: $3.00, Vision: Yes, Cache: Yes
+10. **Qwen2.5‑Plus** (Alibaba) - General chat - Input: $0.25, Output: $1.00, Vision: Yes, Cache: Yes
+11. **Claude 3.5 Haiku** (Anthropic) - Fast summarization - Input: $0.25, Output: $1.25, Vision: Yes, Cache: No
+12. **Gemini 1.5 Flash** (Google) - Fast chat, tools - Input: $0.037, Output: $0.15, Vision: No, Cache: No
+13. **GPT‑4o‑mini** (OpenAI) - Chat, tools - Input: $0.15, Output: $0.60, Vision: Yes, Cache: Yes
+
+### 🟢 CHEAPEST MODELS
+14. **Llama 3.3 70B** (Meta) - Reasoning, coding - Input: 'compute', Output: 'compute', Vision: No, Cache: N/A
+15. **Llama 3.3 8B** (Meta) - Fast chat - Input: 'compute', Output: 'compute', Vision: No, Cache: N/A
+16. **DeepSeek R1‑Distill** (DeepSeek) - Reasoning, coding - Input: 'free', Output: 'free', Vision: No, Cache: N/A
+17. **Qwen2.5‑7B** (Alibaba) - Chat, tools - Input: 'free', Output: 'free', Vision: Yes, Cache: N/A
+18. **Phi‑4 Mini** (Microsoft) - Chat, tools - Input: 'free', Output: 'free', Vision: No, Cache: N/A
+
+Note: For 'compute' and 'free' models, set inputPerM=0, outputPerM=0, and add a flag like `computeCost: true` or `free: true`.
+
+## Requirements
+
+### 1. Add New Provider Modules
+Create new files in `src/pricing/`:
+- `moonshot.js` (for Kimi models)
+- `openai.js`
+- `alibaba.js`
+- `meta.js`
+- `microsoft.js`
+
+Follow the pattern of existing providers (see anthropic.js). Each module should export a `fetch<Pricing>` function that returns an array of pricing objects. Include fields: `model`, `inputPerM`, `outputPerM`, `contextWindow` (if known), `vision` (boolean), `cache` (boolean), `cacheReadPerM` (optional), `cacheWritePerM` (optional). For models with cache pricing (like Kimi K2), include `cacheHitInputPerM` and `cacheMissInputPerM`.
+
+Use static pricing (no web scraping needed) since we have the table.
+
+### 2. Update `src/pricing/index.js`
+Add exports for new providers and integrate them into `fetchAllPricing` function.
+
+### 3. Update `src/optimizer/index.js`
+- Add new models to QUALITY_SCORES for relevant task types. Use the 'Best Tasks' column from table to assign quality scores (scale 1-10). For example, Kimi K2.5 gets high scores for reasoning and coding tasks.
+- Update TASK_TYPE_MAP if needed (but it's derived from QUALITY_SCORES).
+- Ensure the optimizer algorithm can handle cache pricing (modify cost calculation to consider cache hit/miss probabilities). Add a helper to compute effective input cost: `effectiveInputPerM = cache ? (cacheHitProbability * cacheHitInputPerM + (1-cacheHitProbability) * cacheMissInputPerM) : inputPerM`. Assume cache hit probability 0.5 for now.
+- For free/compute models, set cost to zero, but maybe add a penalty factor for local compute? Ignore for now.
+
+### 4. Update `data/taxonomy.json`
+Add new task types if needed based on model capabilities (e.g., 'vision-tasks', 'long-reasoning'). But you can skip this if existing categories suffice.
+
+### 5. Test Integration
+Ensure the weekly pipeline (`scripts/run-weekly.js`) still works with new providers. Run a dry-run to verify no errors.
+
+### 6. Update Documentation
+Update SKILL.md with new provider list.
+
+## Implementation Notes
+- Maintain backward compatibility: existing providers (anthropic, google, deepseek) unchanged.
+- Use consistent model IDs: e.g., 'moonshot/kimi-k2.5', 'openai/gpt-4.1', 'alibaba/qwen2.5-max', etc.
+- Ensure model IDs match OpenClaw's model naming convention (provider/model-name).
+- Add appropriate quality scores based on model capabilities (premium models score high for their specialty).
+- Consider adding a 'vision' field to pricing objects and filter in optimizer for vision tasks.
+
+Please implement step by step, verify each change, and ensure the code runs without errors. When finished, output a summary of changes made.
