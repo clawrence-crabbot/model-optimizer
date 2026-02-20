@@ -58,5 +58,25 @@
       }
     ],
     "source": "ai.google.dev"
+  },
+  "deepseek": {
+    "timestamp": 1771551523407,
+    "data": [
+      {
+        "model": "deepseek/deepseek-chat",
+        "inputPerM": 0.07,
+        "outputPerM": 1.1,
+        "contextWindow": 128000,
+        "note": "Fallback pricing from TOOLS.md"
+      },
+      {
+        "model": "deepseek/deepseek-reasoner",
+        "inputPerM": 0.07,
+        "outputPerM": 1.1,
+        "contextWindow": 128000,
+        "note": "Fallback pricing (same as Chat)"
+      }
+    ],
+    "source": "deepseek.com + fallback"
   }
 }
