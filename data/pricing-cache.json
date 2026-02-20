@@ -22,5 +22,41 @@
       }
     ],
     "source": "anthropic.com"
+  },
+  "google": {
+    "timestamp": 1771550965060,
+    "data": [
+      {
+        "model": "google/gemini-3-flash-preview",
+        "inputPerM": 0.5,
+        "outputPerM": 3,
+        "contextWindow": 1000000
+      },
+      {
+        "model": "google/gemini-2.5-flash",
+        "inputPerM": 0.5,
+        "outputPerM": 3,
+        "contextWindow": 1000000
+      },
+      {
+        "model": "google/gemini-2.5-pro",
+        "inputPerM": 1.25,
+        "outputPerM": 10,
+        "contextWindow": 2000000
+      },
+      {
+        "model": "google/gemini-3-pro-preview",
+        "inputPerM": 2,
+        "outputPerM": 12,
+        "contextWindow": 2000000
+      },
+      {
+        "model": "google/gemini-flash-lite",
+        "inputPerM": 0.1,
+        "outputPerM": 0.4,
+        "contextWindow": 1000000
+      }
+    ],
+    "source": "ai.google.dev"
   }
 }
