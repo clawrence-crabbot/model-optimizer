@@ -180,6 +180,13 @@
       "description": "Escalate to Claude Sonnet only if ANY of",
       "category": "Action Tasks",
       "discoveredAt": "2026-02-20T04:31:17.214Z"
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling",
+      "description": "If a credential is missing/invalid, fail closed with actionable feedback.",
+      "category": "Action Tasks",
+      "discoveredAt": "2026-02-23T19:58:50.247Z"
     }
   ],
   "categories": [
