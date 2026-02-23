@@ -1,11 +1,12 @@
 /**
  * DeepSeek pricing scraper
- * Fetches current model prices from DeepSeek pricing page
+ * Discovers available models first, then scrapes live DeepSeek pricing
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
+import * as cheerio from 'cheerio';
 
 // Use dynamic import for node-fetch (ESM compatibility)
 let fetch;
@@ -21,6 +22,8 @@ try {
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const CACHE_FILE = join(__dirname, '../../data/pricing-cache.json');
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const DEEPSEEK_MODELS_ENDPOINT = 'https://api.deepseek.com/v1/models';
+const DEEPSEEK_PRICING_URL = 'https://api-docs.deepseek.com/quick_start/pricing-details-usd';
 
 /**
  * Read from cache
@@ -82,8 +85,10 @@ async function fetchFromSource() {
   console.log('Fetching DeepSeek pricing from official sources...');
   
   try {
-    // Try DeepSeek pricing page first
-    const response = await fetch('https://api-docs.deepseek.com/pricing', {
+    const discoveredModels = await discoverDeepSeekModels();
+    console.log(`DeepSeek model discovery: ${discoveredModels.length} model(s)`);
+
+    const response = await fetch(DEEPSEEK_PRICING_URL, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ModelOptimizer/1.0; +https://github.com/openclaw/model-optimizer)'
       },
@@ -95,51 +100,13 @@ async function fetchFromSource() {
     }
     
     const html = await response.text();
-    
-    // Parse HTML for pricing information
-    // This is a simplified parser - actual implementation would need to adapt to DeepSeek's page structure
-    const prices = [];
-    
-    // Look for DeepSeek Chat pricing
-    const chatMatch = html.match(/DeepSeek Chat.*?\$(\d+\.?\d*).*?\$(\d+\.?\d*)/i);
-    if (chatMatch) {
-      prices.push({
-        model: 'deepseek/deepseek-chat',
-        inputPerM: parseFloat(chatMatch[1]),
-        outputPerM: parseFloat(chatMatch[2]),
-        contextWindow: 128000 // Default context window
-      });
-    }
-    
-    // Look for DeepSeek Reasoner pricing
-    const reasonerMatch = html.match(/DeepSeek Reasoner.*?\$(\d+\.?\d*).*?\$(\d+\.?\d*)/i);
-    if (reasonerMatch) {
-      prices.push({
-        model: 'deepseek/deepseek-reasoner',
-        inputPerM: parseFloat(reasonerMatch[1]),
-        outputPerM: parseFloat(reasonerMatch[2]),
-        contextWindow: 128000 // Default context window
-      });
-    }
+    const scrapedPrices = parseDeepSeekPricingHTML(html);
+    const prices = attachPricingToDiscoveredModels(discoveredModels, scrapedPrices);
     
     if (prices.length > 0) {
       console.log(`Successfully parsed ${prices.length} DeepSeek models from pricing page`);
       return prices;
     }
-    
-    // If parsing failed, try API endpoint
-    console.log('HTML parsing failed, trying API endpoint...');
-    const apiResponse = await fetch('https://api.deepseek.com/v1/models', {
-      headers: {
-        'Authorization': 'Bearer dummy', // Will fail but might give us rate limit info
-        'User-Agent': 'ModelOptimizer/1.0'
-      },
-      timeout: 5000
-    });
-    
-    // Even if API fails, we'll use fallback pricing
-    console.log('API response status:', apiResponse.status);
-    
   } catch (error) {
     console.warn('Failed to fetch DeepSeek pricing:', error.message);
   }
@@ -148,31 +115,202 @@ async function fetchFromSource() {
   return getFallbackPricing();
 }
 
+function parseDeepSeekPricingHTML(html) {
+  const $ = cheerio.load(html);
+  const tablePrices = parsePricingDetailsTable($);
+  if (tablePrices.length > 0) return tablePrices;
+
+  const fullText = $('body').text().replace(/\s+/g, ' ');
+
+  // Fallback parse: docs may expose generic rates without per-model rows.
+  const cacheHit = extractDollar(fullText, /1M INPUT TOKENS\s*\(CACHE HIT\)\s*\$([0-9]+(?:\.[0-9]+)?)/i);
+  const cacheMiss = extractDollar(fullText, /1M INPUT TOKENS\s*\(CACHE MISS\)\s*\$([0-9]+(?:\.[0-9]+)?)/i);
+  const output = extractDollar(fullText, /1M OUTPUT TOKENS\s*\$([0-9]+(?:\.[0-9]+)?)/i);
+
+  if (cacheHit == null || cacheMiss == null || output == null) {
+    throw new Error('Could not parse DeepSeek pricing values from docs');
+  }
+
+  return [
+    {
+      model: 'deepseek/deepseek-chat',
+      inputPerM: cacheMiss,
+      outputPerM: output,
+      contextWindow: 128000,
+      vision: false,
+      cache: true,
+      cacheHitInputPerM: cacheHit,
+      cacheMissInputPerM: cacheMiss
+    },
+    {
+      model: 'deepseek/deepseek-reasoner',
+      inputPerM: cacheMiss,
+      outputPerM: output,
+      contextWindow: 128000,
+      vision: false,
+      cache: true,
+      cacheHitInputPerM: cacheHit,
+      cacheMissInputPerM: cacheMiss
+    }
+  ];
+}
+
+function parsePricingDetailsTable($) {
+  const models = new Map();
+  $('table tr').each((_, row) => {
+    const cells = $(row)
+      .find('th, td')
+      .map((__, cell) => $(cell).text().trim())
+      .get();
+
+    if (cells.length < 7) return;
+    const label = String(cells[0] || '').toLowerCase();
+    if (label === 'model' || label.includes('model')) return;
+
+    const isChat = label.includes('deepseek-chat');
+    const isReasoner = label.includes('deepseek-reasoner');
+    if (!isChat && !isReasoner) return;
+
+    const cacheHit = parsePrice(cells[4]);
+    const cacheMiss = parsePrice(cells[5]);
+    const output = parsePrice(cells[6]);
+    if (cacheHit == null || cacheMiss == null || output == null) return;
+
+    const model = isReasoner ? 'deepseek/deepseek-reasoner' : 'deepseek/deepseek-chat';
+    models.set(model, {
+      model,
+      inputPerM: cacheMiss,
+      outputPerM: output,
+      contextWindow: 128000,
+      vision: false,
+      cache: true,
+      cacheHitInputPerM: cacheHit,
+      cacheMissInputPerM: cacheMiss
+    });
+  });
+
+  return [...models.values()];
+}
+
+function parsePrice(text) {
+  const match = String(text).replace(/,/g, '').match(/([0-9]+(?:\.[0-9]+)?)/);
+  return match ? Number.parseFloat(match[1]) : null;
+}
+
+function extractDollar(text, regex) {
+  const match = String(text).match(regex);
+  return match ? Number.parseFloat(match[1]) : null;
+}
+
+async function discoverDeepSeekModels() {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const response = await fetch(DEEPSEEK_MODELS_ENDPOINT, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'User-Agent': 'Mozilla/5.0 (compatible; ModelOptimizer/1.0; +https://github.com/openclaw/model-optimizer)'
+      },
+      timeout: 10000
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    const list = Array.isArray(json.data) ? json.data : [];
+    const discovered = [];
+    for (const model of list) {
+      const normalized = normalizeDeepSeekModelId(model?.id);
+      if (normalized) discovered.push(normalized);
+    }
+    return [...new Set(discovered)];
+  } catch (error) {
+    console.warn('DeepSeek model discovery failed:', error.message);
+    return [];
+  }
+}
+
+function normalizeDeepSeekModelId(id) {
+  if (!id) return null;
+  const name = String(id).trim().toLowerCase();
+  if (!name.startsWith('deepseek-')) return null;
+  return `deepseek/${name}`;
+}
+
+function attachPricingToDiscoveredModels(discoveredModels, scrapedPrices) {
+  if (!Array.isArray(discoveredModels) || discoveredModels.length === 0) {
+    return scrapedPrices;
+  }
+
+  const mapped = [];
+  for (const model of discoveredModels) {
+    const direct = scrapedPrices.find(entry => entry.model === model);
+    if (direct) {
+      mapped.push({ ...direct, model });
+      continue;
+    }
+
+    const fallback = mapDiscoveredToDeepSeekPrice(model, scrapedPrices);
+    if (fallback) {
+      mapped.push({
+        ...fallback,
+        model
+      });
+    }
+  }
+
+  return mapped.length > 0 ? dedupeByModel(mapped) : scrapedPrices;
+}
+
+function mapDiscoveredToDeepSeekPrice(model, scrapedPrices) {
+  const name = model.replace(/^deepseek\//, '');
+  const reasoner = scrapedPrices.find(entry => entry.model === 'deepseek/deepseek-reasoner');
+  const chat = scrapedPrices.find(entry => entry.model === 'deepseek/deepseek-chat');
+
+  if (name.includes('reasoner') || name.includes('-r1')) return reasoner || chat || null;
+  if (name.includes('chat') || name.includes('-v3')) return chat || reasoner || null;
+  return chat || reasoner || null;
+}
+
+function dedupeByModel(prices) {
+  const map = new Map();
+  for (const entry of prices) map.set(entry.model, entry);
+  return [...map.values()];
+}
+
 /**
  * Get fallback pricing (hardcoded values)
  * @returns {Array} Array of pricing objects
  */
-function getFallbackPricing() {
-  console.warn('Using fallback DeepSeek pricing (scraping failed)');
-  
+function getFallbackPricing({ logWarning = true } = {}) {
+  if (logWarning) {
+    console.warn('Using fallback DeepSeek pricing (scraping failed)');
+  }
+
   return [
     {
       model: 'deepseek/deepseek-chat',
-      inputPerM: 0.07,
-      outputPerM: 1.10,
+      inputPerM: 0.27,
+      outputPerM: 1.1,
       contextWindow: 128000,
       vision: false,
-      cache: false,
-      note: 'Fallback pricing from TOOLS.md'
+      cache: true,
+      cacheHitInputPerM: 0.07,
+      cacheMissInputPerM: 0.27,
+      note: 'Fallback pricing from DeepSeek docs (pricing-details-usd)'
     },
     {
       model: 'deepseek/deepseek-reasoner',
-      inputPerM: 0.07,
-      outputPerM: 1.10,
+      inputPerM: 0.55,
+      outputPerM: 2.19,
       contextWindow: 128000,
       vision: false,
-      cache: false,
-      note: 'Fallback pricing (same as Chat)'
+      cache: true,
+      cacheHitInputPerM: 0.14,
+      cacheMissInputPerM: 0.55,
+      note: 'Fallback pricing from DeepSeek docs (pricing-details-usd)'
     },
     {
       model: 'deepseek/deepseek-v3',
@@ -203,7 +341,7 @@ function getFallbackPricing() {
 }
 
 function ensureExtendedDeepSeekModels(prices) {
-  const required = getFallbackPricing();
+  const required = getFallbackPricing({ logWarning: false });
   const merged = [...prices];
   for (const model of required) {
     if (!merged.find(entry => entry.model === model.model)) {
@@ -231,7 +369,7 @@ export async function fetchDeepSeekPricing() {
     
     // Cache the results
     const extended = ensureExtendedDeepSeekModels(prices);
-    writeCache('deepseek', extended, 'deepseek.com + fallback');
+    writeCache('deepseek', extended, 'api-docs.deepseek.com/quick_start/pricing-details-usd');
     
     return extended;
   } catch (error) {
