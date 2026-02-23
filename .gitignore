@@ -6,8 +6,11 @@ yarn-error.log*
 
 # Runtime data
 data/cache-*.json
+data/pricing-cache.json
 data/*.tmp
+data/pending/*.json
 *.log
+reports/*.md
 
 # Environment variables
 .env
